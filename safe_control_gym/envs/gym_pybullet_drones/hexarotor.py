@@ -10,6 +10,7 @@ import casadi as cs
 from gym import spaces
 import numpy as np
 import pybullet as p
+import fadronesim
 
 from safe_control_gym.envs.benchmark_env import Cost, Task
 from safe_control_gym.envs.constraints import GENERAL_CONSTRAINTS
@@ -19,7 +20,7 @@ from safe_control_gym.envs.gym_pybullet_drones.quadrotor_utils import QuadType, 
 from safe_control_gym.math_and_models.normalization import normalize_angle
 
 
-class Hexarotor(BaseAviary):
+class Hexarotor2D():
     """1D and 2D quadrotor environment task.
 
     Including symbolic model, constraints, randomization, adversarial disturbances,
@@ -126,6 +127,7 @@ class Hexarotor(BaseAviary):
             info_mse_metric_state_weight (list/ndarray): quadratic weights for state in mse calculation for info dict.
 
         """
+
         # Select the 1D (moving along z) or 2D (moving in the xz plane) quadrotor.
         self.QUAD_TYPE = QuadType(quad_type)
         self.norm_act_scale = norm_act_scale
@@ -137,7 +139,7 @@ class Hexarotor(BaseAviary):
         self.info_mse_metric_state_weight = np.array(info_mse_metric_state_weight, ndmin=1, dtype=float)
         # BaseAviary constructor, called after defining the custom args,
         # since some BenchmarkEnv init setup can be task(custom args)-dependent.
-        super().__init__(init_state=init_state, inertial_prop=inertial_prop, **kwargs)
+        # super().__init__(init_state=init_state, inertial_prop=inertial_prop, **kwargs)
         
         # Custom disturbance info.
         # 1D quad disturbances have lower dimensions
@@ -197,6 +199,8 @@ class Hexarotor(BaseAviary):
             self.J[1, 1] = inertial_prop.get("iyy", 0)
         else:
             raise ValueError("[ERROR] in Quadrotor.__init__(), inertial_prop is not of shape (2,).")
+        # Create a hexarotor object
+        self.hexarotor = fadronesim.FAHexarotor()#(mass = self.MASS, J = self.J)
         # Set prior/symbolic info.
         self._setup_symbolic()
             
@@ -307,7 +311,11 @@ class Hexarotor(BaseAviary):
         #     return obs
         obs = self._get_observation()
         return obs
-        
+
+    # def _advance_simulation(self,action):
+    #     action6D = [action[0], 0.0, action[1], 0., action[2], 0.]
+    #     obs, reward, done, info = self.hexarotor.step(action6D)
+
 
     def step(self, action):
         """Advances the environment by one control step.
@@ -356,13 +364,15 @@ class Hexarotor(BaseAviary):
         #             "[ERROR] in Quadrotor._advance_simulation(), disturb force for quad 3D is not available."
         #         )
         # # Advance the simulation.
-        # super()._advance_simulation(rpm, disturb_force)
-        # TODO: Roll out the dynamics and update the states
-        # Standard Gym return.
-        obs = self._get_observation()
-        rew = self._get_reward()
-        done = self._get_done()
-        info = self._get_info()
+        # self._advance_simulation(action)
+        # # TODO: Roll out the dynamics and update the states. DONE!!!!!!!!!!!!!!
+        # # Standard Gym return.
+        # obs = self._get_observation()
+        # rew = self._get_reward()
+        # done = self._get_done()
+        # info = self._get_info()
+        action6D = [action[0], 0.0, action[1], 0., action[2], 0.]
+        obs, rew, done, info = self.hexarotor.step(action6D)
         # Thai: This function add penalty to the reward for violating constraints. Should not be used in MPC, only for RL.
         #obs, rew, done, info = super().after_step(obs, rew, done, info)
         return obs, rew, done, info
@@ -562,8 +572,8 @@ class Hexarotor(BaseAviary):
             ndarray: The state of the quadrotor, of size 2 or 6 depending on QUAD_TYPE.
 
         """
-        # TODO: Rewrite _get_drone_state_vector to use our own dynamics function.
-        full_state = self._get_drone_state_vector(0)
+        # TODO: Rewrite _get_drone_state_vector to use our own dynamics function. DONE
+        full_state = self.hexarotor._get_obs()
         pos, _, rpy, vel, ang_v, _ = np.split(full_state, [3, 7, 10, 13, 16])
         if self.QUAD_TYPE == QuadType.ONE_D:
             # {z, z_dot}.
