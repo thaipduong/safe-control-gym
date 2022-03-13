@@ -163,20 +163,24 @@ class FAHexarotor(gym.Env):
         # x = obs[0:3], quat = obs[3:7], rpys = obs[7:10], x_dot = obs[10:13], omega = obs[13:16], rotmat = obs[16:25]
         return np.hstack((self.x, self.quat, self.rpys, self.x_dot, self.omega, self.R.flatten()))
 
-    def reset(self, init_xyz = None, init_rpys = None):
+    def reset(self, init_xyz = None, init_rpys = None, init_vel = None, init_omega = None):
         # Reset state
         if init_xyz is None:
             init_xyz = np.array([0.0, 0.0, 0.0])
         if init_rpys is None:
             init_rpys = np.array([0.0, 0.0, 0.0])
+        if init_vel is None:
+            init_vel = np.array([0.0, 0.0, 0.0])
+        if init_omega is None:
+            init_omega = np.array([0.0, 0.0, 0.0])
         self.x = init_xyz
-        self.x_dot = np.zeros(3)
+        self.x_dot = init_vel
         # self.x_dot_dot = np.zeros(3)
         rotation = Rotation.from_euler('xyz', init_rpys)
         self.rpys = init_rpys
         self.R = rotation.as_matrix()
         self.quat = rotation.as_quat()
-        self.omega = np.array([0.0, 0.0, 0.0])
+        self.omega = init_omega
 
         # Reset viz
         self.reset_viz()

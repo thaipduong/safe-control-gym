@@ -256,7 +256,7 @@ class Hexarotor2D():
         # PyBullet simulation reset.
         # super()._reset_simulation()
         # Choose randomized or deterministic inertial properties.
-        # TODO: reset our own simulator to initial values + prop_values
+        # TODO: reset our own simulator to initial values + prop_values. DONE
         prop_values = {
             "M": self.MASS,
             "Iyy": self.J[1, 1],
@@ -267,32 +267,41 @@ class Hexarotor2D():
         #         prop_values, self.INERTIAL_PROP_RAND_INFO)
         #     if any(phy_quantity < 0 for phy_quantity in prop_values.values()):
         #         raise ValueError("[ERROR] in CartPole.reset(), negative randomized inertial properties.")
-        # self.OVERRIDDEN_QUAD_MASS = prop_values["M"]
-        # self.OVERRIDDEN_QUAD_INERTIA = [self.J[0, 0], prop_values["Iyy"], self.J[2, 2]]
+        self.OVERRIDDEN_QUAD_MASS = prop_values["M"]
+        self.OVERRIDDEN_QUAD_INERTIA = [self.J[0, 0], prop_values["Iyy"], self.J[2, 2]]
         # # Override inertial properties.
+        self.hexarotor.M = self.OVERRIDDEN_QUAD_MASS
+        self.hexarotor.J = np.diag(self.OVERRIDDEN_QUAD_INERTIA)
+        self.hexarotor.J_inv = np.linalg.inv(self.hexarotor.J)
         # p.changeDynamics(
         #     self.DRONE_IDS[0],
         #     linkIndex=-1,  # Base link.
         #     mass=self.OVERRIDDEN_QUAD_MASS,
         #     localInertiaDiagonal=self.OVERRIDDEN_QUAD_INERTIA,
         #     physicsClientId=self.PYB_CLIENT)
-        # # Randomize initial state.
-        # init_values = {
-        #     "init_x": self.INIT_X,
-        #     "init_x_dot": self.INIT_X_DOT,
-        #     "init_z": self.INIT_Z,
-        #     "init_z_dot": self.INIT_Z_DOT,
-        #     "init_theta": self.INIT_THETA,
-        #     "init_theta_dot": self.INIT_THETA_DOT,
-        # }
-        # if self.RANDOMIZED_INIT:
-        #     init_values = self._randomize_values_by_info(init_values, self.INIT_STATE_RAND_INFO)
-        # OVERRIDDEN_INIT_X = init_values["init_x"]
-        # OVERRIDDEN_INIT_X_DOT = init_values["init_x_dot"]
-        # OVERRIDDEN_INIT_Z = init_values["init_z"]
-        # OVERRIDDEN_INIT_Z_DOT = init_values["init_z_dot"]
-        # OVERRIDDEN_INIT_THETA = init_values["init_theta"]
-        # OVERRIDDEN_INIT_THETA_DOT = init_values["init_theta_dot"]
+        # Randomize initial state.
+        init_values = {
+            "init_x": self.INIT_X,
+            "init_x_dot": self.INIT_X_DOT,
+            "init_z": self.INIT_Z,
+            "init_z_dot": self.INIT_Z_DOT,
+            "init_theta": self.INIT_THETA,
+            "init_theta_dot": self.INIT_THETA_DOT,
+        }
+        if self.RANDOMIZED_INIT:
+            init_values = self._randomize_values_by_info(init_values, self.INIT_STATE_RAND_INFO)
+        OVERRIDDEN_INIT_X = init_values["init_x"]
+        OVERRIDDEN_INIT_X_DOT = init_values["init_x_dot"]
+        OVERRIDDEN_INIT_Z = init_values["init_z"]
+        OVERRIDDEN_INIT_Z_DOT = init_values["init_z_dot"]
+        OVERRIDDEN_INIT_THETA = init_values["init_theta"]
+        OVERRIDDEN_INIT_THETA_DOT = init_values["init_theta_dot"]
+
+        self.hexarotor.reset(init_xyz=np.array([OVERRIDDEN_INIT_X, 0, OVERRIDDEN_INIT_Z]),
+                             init_rpys=np.array([0, OVERRIDDEN_INIT_THETA, 0]),
+                             init_vel=np.array([OVERRIDDEN_INIT_X_DOT, 0, OVERRIDDEN_INIT_Z_DOT]),
+                             init_omega=np.array([0, OVERRIDDEN_INIT_THETA_DOT, 0]))
+
         # p.resetBasePositionAndOrientation(self.DRONE_IDS[0], [OVERRIDDEN_INIT_X, 0, OVERRIDDEN_INIT_Z],
         #                                   p.getQuaternionFromEuler([0, OVERRIDDEN_INIT_THETA, 0]),
         #                                   physicsClientId=self.PYB_CLIENT)
