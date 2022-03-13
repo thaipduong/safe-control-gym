@@ -10,7 +10,6 @@ import casadi as cs
 from gym import spaces
 import numpy as np
 import pybullet as p
-from . import fadronesim
 
 from safe_control_gym.envs.benchmark_env import Cost, Task
 from safe_control_gym.envs.constraints import GENERAL_CONSTRAINTS
@@ -19,9 +18,8 @@ from safe_control_gym.envs.gym_pybullet_drones.base_aviary import BaseAviary
 from safe_control_gym.envs.gym_pybullet_drones.quadrotor_utils import QuadType, cmd2pwm, pwm2rpm
 from safe_control_gym.math_and_models.normalization import normalize_angle
 
-from safe_control_gym.envs.benchmark_env import BenchmarkEnv
 
-class Hexarotor2D():
+class Hexarotor2D(BaseAviary):
     """1D and 2D quadrotor environment task.
 
     Including symbolic model, constraints, randomization, adversarial disturbances,
@@ -128,7 +126,6 @@ class Hexarotor2D():
             info_mse_metric_state_weight (list/ndarray): quadratic weights for state in mse calculation for info dict.
 
         """
-
         # Select the 1D (moving along z) or 2D (moving in the xz plane) quadrotor.
         self.QUAD_TYPE = QuadType(quad_type)
         self.norm_act_scale = norm_act_scale
@@ -140,8 +137,8 @@ class Hexarotor2D():
         self.info_mse_metric_state_weight = np.array(info_mse_metric_state_weight, ndmin=1, dtype=float)
         # BaseAviary constructor, called after defining the custom args,
         # since some BenchmarkEnv init setup can be task(custom args)-dependent.
-        # super().__init__(init_state=init_state, inertial_prop=inertial_prop, **kwargs)
-        
+        super().__init__(init_state=init_state, inertial_prop=inertial_prop, **kwargs)
+
         # Custom disturbance info.
         # 1D quad disturbances have lower dimensions
         if self.QUAD_TYPE == QuadType.ONE_D:
@@ -182,39 +179,14 @@ class Hexarotor2D():
             for init_name in ["init_x", "init_x_dot", "init_theta", "init_theta_dot"]:
                 self.INIT_STATE_RAND_INFO.pop(init_name, None)
 
-
-        # Create a hexarotor object
-        self.hexarotor = fadronesim.FAHexarotor()#(mass = self.MASS, J = self.J)
-        self.MASS = self.hexarotor.M
-        self.J = self.hexarotor.J
-        self.GRAVITY_ACC = self.hexarotor.G
-        self.CTRL_TIMESTEP = self.hexarotor.dt
-        self.MAX_THRUST = self.hexarotor.MAX_THRUST
-        self.MAX_XY_TORQUE = self.hexarotor.MAX_XY_TORQUE
-        self.MAX_Z_TORQUE = self.hexarotor.MAX_Z_TORQUE
-        self.GROUND_PLANE_Z = -0.05
-        self.TASK = Task.STABILIZATION
-
-        # Create action and observation spaces.
-        self.NORMALIZED_RL_ACTION_SPACE = False
-        self._set_action_space()
-        self._set_observation_space()
-        # Store action (input) and observation spaces dimensions.
-        # if observation is not the same as state, env should also have a `state_space`
-        # and `state_dim` is queried from it.
-        self.action_dim = self.action_space.shape[0]
-        self.obs_dim = self.observation_space.shape[0]
-        self.state_dim = self.state_space.shape[0]
-
         # Decide whether to randomize the inertial properties and how (see info dictionary).
         # self.RANDOMIZED_INERTIAL_PROP = randomized_inertial_prop
         # if inertial_prop_randomization_info is not None:
         #     self.INERTIAL_PROP_RAND_INFO = inertial_prop_randomization_info
         # Do NOT randomize J for the 1D quadrotor.
-
         if self.QUAD_TYPE == QuadType.ONE_D:
             self.INERTIAL_PROP_RAND_INFO.pop("Iyy", None)
-                
+
         # Override inertial properties of passed as arguments.
         if inertial_prop is None:
             pass
@@ -225,10 +197,9 @@ class Hexarotor2D():
             self.J[1, 1] = inertial_prop.get("iyy", 0)
         else:
             raise ValueError("[ERROR] in Quadrotor.__init__(), inertial_prop is not of shape (2,).")
-
         # Set prior/symbolic info.
         self._setup_symbolic()
-            
+
         # Create X_GOAL and U_GOAL references for the assigned task.
         self.U_GOAL = np.ones(self.action_dim) * self.MASS * self.GRAVITY_ACC / self.action_dim
         if self.TASK == Task.STABILIZATION:
@@ -277,33 +248,28 @@ class Hexarotor2D():
             dict: A dictionary with information about the dynamics and constraints symbolic models.
 
         """
-        # super().before_reset()
+        super().before_reset()
         # PyBullet simulation reset.
-        # super()._reset_simulation()
+        super()._reset_simulation()
         # Choose randomized or deterministic inertial properties.
-        # TODO: reset our own simulator to initial values + prop_values. DONE
         prop_values = {
             "M": self.MASS,
             "Iyy": self.J[1, 1],
         }
-
-        # if self.RANDOMIZED_INERTIAL_PROP:
-        #     prop_values = self._randomize_values_by_info(
-        #         prop_values, self.INERTIAL_PROP_RAND_INFO)
-        #     if any(phy_quantity < 0 for phy_quantity in prop_values.values()):
-        #         raise ValueError("[ERROR] in CartPole.reset(), negative randomized inertial properties.")
+        if self.RANDOMIZED_INERTIAL_PROP:
+            prop_values = self._randomize_values_by_info(
+                prop_values, self.INERTIAL_PROP_RAND_INFO)
+            if any(phy_quantity < 0 for phy_quantity in prop_values.values()):
+                raise ValueError("[ERROR] in CartPole.reset(), negative randomized inertial properties.")
         self.OVERRIDDEN_QUAD_MASS = prop_values["M"]
         self.OVERRIDDEN_QUAD_INERTIA = [self.J[0, 0], prop_values["Iyy"], self.J[2, 2]]
-        # # Override inertial properties.
-        self.hexarotor.M = self.OVERRIDDEN_QUAD_MASS
-        self.hexarotor.J = np.diag(self.OVERRIDDEN_QUAD_INERTIA)
-        self.hexarotor.J_inv = np.linalg.inv(self.hexarotor.J)
-        # p.changeDynamics(
-        #     self.DRONE_IDS[0],
-        #     linkIndex=-1,  # Base link.
-        #     mass=self.OVERRIDDEN_QUAD_MASS,
-        #     localInertiaDiagonal=self.OVERRIDDEN_QUAD_INERTIA,
-        #     physicsClientId=self.PYB_CLIENT)
+        # Override inertial properties.
+        p.changeDynamics(
+            self.DRONE_IDS[0],
+            linkIndex=-1,  # Base link.
+            mass=self.OVERRIDDEN_QUAD_MASS,
+            localInertiaDiagonal=self.OVERRIDDEN_QUAD_INERTIA,
+            physicsClientId=self.PYB_CLIENT)
         # Randomize initial state.
         init_values = {
             "init_x": self.INIT_X,
@@ -321,39 +287,27 @@ class Hexarotor2D():
         OVERRIDDEN_INIT_Z_DOT = init_values["init_z_dot"]
         OVERRIDDEN_INIT_THETA = init_values["init_theta"]
         OVERRIDDEN_INIT_THETA_DOT = init_values["init_theta_dot"]
-
-        self.hexarotor.reset(init_xyz=np.array([OVERRIDDEN_INIT_X, 0, OVERRIDDEN_INIT_Z]),
-                             init_rpys=np.array([0, OVERRIDDEN_INIT_THETA, 0]),
-                             init_vel=np.array([OVERRIDDEN_INIT_X_DOT, 0, OVERRIDDEN_INIT_Z_DOT]),
-                             init_omega=np.array([0, OVERRIDDEN_INIT_THETA_DOT, 0]))
-
-        # p.resetBasePositionAndOrientation(self.DRONE_IDS[0], [OVERRIDDEN_INIT_X, 0, OVERRIDDEN_INIT_Z],
-        #                                   p.getQuaternionFromEuler([0, OVERRIDDEN_INIT_THETA, 0]),
-        #                                   physicsClientId=self.PYB_CLIENT)
-        # p.resetBaseVelocity(self.DRONE_IDS[0],
-        #                     [OVERRIDDEN_INIT_X_DOT, 0, OVERRIDDEN_INIT_Z_DOT],
-        #                     [0, OVERRIDDEN_INIT_THETA_DOT, 0],
-        #                     physicsClientId=self.PYB_CLIENT)
-        # # Update BaseAviary internal variables before calling self._get_observation().
-        # self._update_and_store_kinematic_information()
-        # obs, info = self._get_observation(), self._get_reset_info()
-        # obs, info = super().after_reset(obs, info)
-        # # Return either an observation and dictionary or just the observation.
-        # if self.INFO_IN_RESET:
-        #     return obs, info
-        # else:
-        #     return obs
-        obs = self._get_observation()
-        return obs
-
-    # def _advance_simulation(self,action):
-    #     action6D = [action[0], 0.0, action[1], 0., action[2], 0.]
-    #     obs, reward, done, info = self.hexarotor.step(action6D)
+        p.resetBasePositionAndOrientation(self.DRONE_IDS[0], [OVERRIDDEN_INIT_X, 0, OVERRIDDEN_INIT_Z],
+                                          p.getQuaternionFromEuler([0, OVERRIDDEN_INIT_THETA, 0]),
+                                          physicsClientId=self.PYB_CLIENT)
+        p.resetBaseVelocity(self.DRONE_IDS[0],
+                            [OVERRIDDEN_INIT_X_DOT, 0, OVERRIDDEN_INIT_Z_DOT],
+                            [0, OVERRIDDEN_INIT_THETA_DOT, 0],
+                            physicsClientId=self.PYB_CLIENT)
+        # Update BaseAviary internal variables before calling self._get_observation().
+        self._update_and_store_kinematic_information()
+        obs, info = self._get_observation(), self._get_reset_info()
+        obs, info = super().after_reset(obs, info)
+        # Return either an observation and dictionary or just the observation.
+        if self.INFO_IN_RESET:
+            return obs, info
+        else:
+            return obs
 
 
     def step(self, action):
         """Advances the environment by one control step.
-        
+
         Pass the commanded RPMs and the adversarial force to the superclass .step().
         The PyBullet simulation is stepped PYB_FREQ/CTRL_FREQ times in BaseAviary.
 
@@ -367,71 +321,66 @@ class Hexarotor2D():
             dict: A dictionary with information about the constraints evaluations and violations.
 
         """
-        # # Get the preprocessed rpm for each motor
-        # rpm = super().before_step(action)
-        # # Determine disturbance force.
-        # disturb_force = None
-        # passive_disturb = "dynamics" in self.disturbances
-        # adv_disturb = self.adversary_disturbance == "dynamics"
-        # if passive_disturb or adv_disturb:
-        #     disturb_force = np.zeros(2)
-        # if passive_disturb:
-        #     disturb_force = self.disturbances["dynamics"].apply(
-        #         disturb_force, self)
-        # if adv_disturb and self.adv_action is not None:
-        #     disturb_force = disturb_force + self.adv_action
-        #     # Clear the adversary action, wait for the next one.
-        #     self.adv_action = None
-        # # Construct full (3D) disturbance force.
-        # if disturb_force is not None:
-        #     if self.QUAD_TYPE == QuadType.ONE_D:
-        #         # Only disturb on z direction.
-        #         disturb_force = [0, 0, float(disturb_force)]
-        #     elif self.QUAD_TYPE == QuadType.TWO_D:
-        #         # Only disturb on x-z plane.
-        #         disturb_force = [
-        #             float(disturb_force[0]), 0,
-        #             float(disturb_force[1])
-        #         ]
-        #     else:
-        #         raise NotImplementedError(
-        #             "[ERROR] in Quadrotor._advance_simulation(), disturb force for quad 3D is not available."
-        #         )
-        # # Advance the simulation.
-        # self._advance_simulation(action)
-        # # TODO: Roll out the dynamics and update the states. DONE!!!!!!!!!!!!!!
-        # # Standard Gym return.
-        # obs = self._get_observation()
-        # rew = self._get_reward()
-        # done = self._get_done()
-        # info = self._get_info()
-        action6D = [action[0], 0.0, action[1], 0., action[2], 0.]
-        _, rew, done, info = self.hexarotor.step(action6D)
-        # Thai: This function add penalty to the reward for violating constraints. Should not be used in MPC, only for RL.
-        #obs, rew, done, info = super().after_step(obs, rew, done, info)
+        # Get the preprocessed rpm for each motor
+        rpm = super().before_step(action)
+        # Determine disturbance force.
+        disturb_force = None
+        passive_disturb = "dynamics" in self.disturbances
+        adv_disturb = self.adversary_disturbance == "dynamics"
+        if passive_disturb or adv_disturb:
+            disturb_force = np.zeros(2)
+        if passive_disturb:
+            disturb_force = self.disturbances["dynamics"].apply(
+                disturb_force, self)
+        if adv_disturb and self.adv_action is not None:
+            disturb_force = disturb_force + self.adv_action
+            # Clear the adversary action, wait for the next one.
+            self.adv_action = None
+        # Construct full (3D) disturbance force.
+        if disturb_force is not None:
+            if self.QUAD_TYPE == QuadType.ONE_D:
+                # Only disturb on z direction.
+                disturb_force = [0, 0, float(disturb_force)]
+            elif self.QUAD_TYPE == QuadType.TWO_D:
+                # Only disturb on x-z plane.
+                disturb_force = [
+                    float(disturb_force[0]), 0,
+                    float(disturb_force[1])
+                ]
+            else:
+                raise NotImplementedError(
+                    "[ERROR] in Quadrotor._advance_simulation(), disturb force for quad 3D is not available."
+                )
+        # Advance the simulation.
+        super()._advance_simulation(rpm, disturb_force)
+        # Standard Gym return.
         obs = self._get_observation()
+        rew = self._get_reward()
+        done = self._get_done()
+        info = self._get_info()
+        obs, rew, done, info = super().after_step(obs, rew, done, info)
         return obs, rew, done, info
-    
-    # def render(self, mode='human'):
-    #     """Retrieves a frame from PyBullet rendering.
-    #
-    #     Args:
-    #         mode (str): Unused.
-    #
-    #     Returns:
-    #         ndarray: A multidimensional array with the RGB frame captured by PyBullet's camera.
-    #
-    #     """
-    #     [w, h, rgb, dep, seg] = p.getCameraImage(width=self.RENDER_WIDTH,
-    #                                              height=self.RENDER_HEIGHT,
-    #                                              shadow=1,
-    #                                              viewMatrix=self.CAM_VIEW,
-    #                                              projectionMatrix=self.CAM_PRO,
-    #                                              renderer=p.ER_TINY_RENDERER,
-    #                                              flags=p.ER_SEGMENTATION_MASK_OBJECT_AND_LINKINDEX,
-    #                                              physicsClientId=self.PYB_CLIENT)
-    #     # Image.fromarray(np.reshape(rgb, (h, w, 4)), 'RGBA').show()
-    #     return np.reshape(rgb, (h, w, 4))
+
+    def render(self, mode='human'):
+        """Retrieves a frame from PyBullet rendering.
+
+        Args:
+            mode (str): Unused.
+
+        Returns:
+            ndarray: A multidimensional array with the RGB frame captured by PyBullet's camera.
+
+        """
+        [w, h, rgb, dep, seg] = p.getCameraImage(width=self.RENDER_WIDTH,
+                                                 height=self.RENDER_HEIGHT,
+                                                 shadow=1,
+                                                 viewMatrix=self.CAM_VIEW,
+                                                 projectionMatrix=self.CAM_PRO,
+                                                 renderer=p.ER_TINY_RENDERER,
+                                                 flags=p.ER_SEGMENTATION_MASK_OBJECT_AND_LINKINDEX,
+                                                 physicsClientId=self.PYB_CLIENT)
+        # Image.fromarray(np.reshape(rgb, (h, w, 4)), 'RGBA').show()
+        return np.reshape(rgb, (h, w, 4))
 
     def _setup_symbolic(self):
         """Creates symbolic (CasADi) models for dynamics, observation, and cost.
@@ -440,7 +389,7 @@ class Hexarotor2D():
             SymbolicModel: CasADi symbolic model of the environment.
 
         """
-        m, g = self.MASS, self.GRAVITY_ACC
+        m, g, l = self.MASS, self.GRAVITY_ACC, self.L
         Iyy = self.J[1, 1]
         dt = self.CTRL_TIMESTEP
         # Define states.
@@ -458,23 +407,22 @@ class Hexarotor2D():
             # Define observation equation.
             Y = cs.vertcat(z, z_dot)
         elif self.QUAD_TYPE == QuadType.TWO_D:
-            nx, nu = 6, 3
+            nx, nu = 6, 2
             # Define states.
             x = cs.MX.sym('x')
             x_dot = cs.MX.sym('x_dot')
             theta = cs.MX.sym('theta')
             theta_dot = cs.MX.sym('theta_dot')
             X = cs.vertcat(x, x_dot, z, z_dot, theta, theta_dot)
-            # Define input thrusts T1, T2 and torque T3.
-            Tx = cs.MX.sym('Tx')
-            Tz = cs.MX.sym('Tz')
-            tau = cs.MX.sym('tau')
-            U = cs.vertcat(Tx, Tz, tau)
+            # Define input thrusts.
+            T1 = cs.MX.sym('T1')
+            T2 = cs.MX.sym('T2')
+            U = cs.vertcat(T1, T2)
             # Define dynamics equations.
             X_dot = cs.vertcat(x_dot,
-                               (cs.cos(theta) * Tx + cs.sin(theta) * Tz) / m, z_dot,
-                               (-cs.sin(theta) * Tx + cs.cos(theta) * Tz) / m - g, theta_dot,
-                               tau / Iyy)
+                               cs.sin(theta) * (T1 + T2) / m, z_dot,
+                               cs.cos(theta) * (T1 + T2) / m - g, theta_dot,
+                               l * (T2 - T1) / Iyy / np.sqrt(2))
             # Define observation.
             Y = cs.vertcat(x, x_dot, z, z_dot, theta, theta_dot)
         # Define cost (quadratic form).
@@ -508,22 +456,28 @@ class Hexarotor2D():
         """
         # Define action/input dimension, labels, and units.
         if self.QUAD_TYPE == QuadType.ONE_D:
-            action_dim = 1 
+            action_dim = 1
             self.ACTION_LABELS = ['T']
             self.ACTION_UNITS = ['N'] if not self.NORMALIZED_RL_ACTION_SPACE else ['-']
         elif self.QUAD_TYPE == QuadType.TWO_D:
-            action_dim = 3
-            self.ACTION_LABELS = ['Tx', 'Tz', 'tau']
-            self.ACTION_UNITS = ['N', 'N', 'Nm'] if not self.NORMALIZED_RL_ACTION_SPACE else ['-', '-', '-']
+            action_dim = 2
+            self.ACTION_LABELS = ['T1', 'T2']
+            self.ACTION_UNITS = ['N', 'N'] if not self.NORMALIZED_RL_ACTION_SPACE else ['-', '-']
         else:
             raise NotImplementedError(
                 "[ERROR] in Quadrotor._set_action_space(), quad_type not supported."
             )
-        self.action_space = spaces.Box(low=np.zeros(action_dim),
-                                           high=np.array([self.MAX_THRUST,self.MAX_THRUST, self.MAX_XY_TORQUE]) * np.ones(action_dim),
+        if self.NORMALIZED_RL_ACTION_SPACE:
+            # normalized thrust (around hover thrust)
+            self.hover_thrust = self.GRAVITY_ACC * self.MASS / action_dim
+            self.action_space = spaces.Box(low=-np.ones(action_dim),
+                                           high=np.ones(action_dim),
                                            dtype=np.float32)
-
-
+        else:
+            # direct thrust control
+            self.action_space = spaces.Box(low=np.zeros(action_dim),
+                                           high=self.MAX_THRUST * np.ones(action_dim),
+                                           dtype=np.float32)
 
     def _set_observation_space(self):
         """Returns the observation space of the environment.
@@ -550,58 +504,57 @@ class Hexarotor2D():
                 -self.theta_threshold_radians * 2, -np.finfo(np.float32).max
             ])
             high = np.array([
-                self.x_threshold * 2, np.finfo(np.float32).max, 
-                self.z_threshold * 2, np.finfo(np.float32).max, 
+                self.x_threshold * 2, np.finfo(np.float32).max,
+                self.z_threshold * 2, np.finfo(np.float32).max,
                 self.theta_threshold_radians * 2, np.finfo(np.float32).max
             ])
             self.STATE_LABELS = ['x', 'x_dot', 'z', 'z_dot', 'theta', 'theta_dot']
             self.STATE_UNITS = ['m', 'm/s', 'm', 'm/s', 'rad', 'rad/s']
         # Define underlying state space in dynamics transition
         self.state_space = spaces.Box(low=low, high=high, dtype=np.float32)
-            
-        # # Concatenate goal info for RL (THAI: this is for RL only, commented out)
-        # if self.COST == Cost.RL_REWARD and self.TASK == Task.TRAJ_TRACKING:
-        #     # include future goal state(s)
-        #     # e.g. horizon=1, obs = {state, state_target}
-        #     mul = 1 + self.obs_goal_horizon
-        #     low = np.concatenate([low] * mul)
-        #     high = np.concatenate([high] * mul)
-        # elif self.COST == Cost.RL_REWARD and self.TASK == Task.STABILIZATION:
-        #     low = np.concatenate([low] * 2)
-        #     high = np.concatenate([high] * 2)
-        # Define obs space exposed to the controller 
+
+        # Concatenate goal info for RL
+        if self.COST == Cost.RL_REWARD and self.TASK == Task.TRAJ_TRACKING:
+            # include future goal state(s)
+            # e.g. horizon=1, obs = {state, state_target}
+            mul = 1 + self.obs_goal_horizon
+            low = np.concatenate([low] * mul)
+            high = np.concatenate([high] * mul)
+        elif self.COST == Cost.RL_REWARD and self.TASK == Task.STABILIZATION:
+            low = np.concatenate([low] * 2)
+            high = np.concatenate([high] * 2)
+        # Define obs space exposed to the controller
         # Note obs space is often different to state space for RL (with additional task info)
         self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
 
+    def _preprocess_control(self, action):
+        """Converts the action passed to .step() into motors' RPMs (ndarray of shape (4,)).
 
-    # def _preprocess_control(self, action):
-    #     """Converts the action passed to .step() into motors' RPMs (ndarray of shape (4,)).
-    #
-    #     Args:
-    #         action (ndarray): The raw action input, of size 1 or 2 depending on QUAD_TYPE.
-    #
-    #     Returns:
-    #         ndarray: The motors RPMs to apply to the quadrotor.
-    #
-    #     """
-    #     if self.NORMALIZED_RL_ACTION_SPACE:
-    #         # rescale action to around hover thrust
-    #         action = np.clip(action, self.action_space.low, self.action_space.high)
-    #         thrust = (1 + self.norm_act_scale * action) * self.hover_thrust
-    #     else:
-    #         thrust = np.clip(action, self.action_space.low, self.action_space.high)
-    #     if not np.array_equal(thrust, np.array(action)) and self.VERBOSE:
-    #         print("[WARNING]: action was clipped in Quadrotor._preprocess_control().")
-    #     self.current_preprocessed_action = thrust
-    #     # Apply disturbances.
-    #     if "action" in self.disturbances:
-    #         thrust = self.disturbances["action"].apply(thrust, self)
-    #     if self.adversary_disturbance == "action":
-    #         thrust = thrust + self.adv_action
-    #     # convert to quad motor rpm commands
-    #     pwm = cmd2pwm(thrust, self.PWM2RPM_SCALE, self.PWM2RPM_CONST, self.KF, self.MIN_PWM, self.MAX_PWM)
-    #     rpm = pwm2rpm(pwm, self.PWM2RPM_SCALE, self.PWM2RPM_CONST)
-    #     return rpm
+        Args:
+            action (ndarray): The raw action input, of size 1 or 2 depending on QUAD_TYPE.
+
+        Returns:
+            ndarray: The motors RPMs to apply to the quadrotor.
+
+        """
+        if self.NORMALIZED_RL_ACTION_SPACE:
+            # rescale action to around hover thrust
+            action = np.clip(action, self.action_space.low, self.action_space.high)
+            thrust = (1 + self.norm_act_scale * action) * self.hover_thrust
+        else:
+            thrust = np.clip(action, self.action_space.low, self.action_space.high)
+        if not np.array_equal(thrust, np.array(action)) and self.VERBOSE:
+            print("[WARNING]: action was clipped in Quadrotor._preprocess_control().")
+        self.current_preprocessed_action = thrust
+        # Apply disturbances.
+        if "action" in self.disturbances:
+            thrust = self.disturbances["action"].apply(thrust, self)
+        if self.adversary_disturbance == "action":
+            thrust = thrust + self.adv_action
+        # convert to quad motor rpm commands
+        pwm = cmd2pwm(thrust, self.PWM2RPM_SCALE, self.PWM2RPM_CONST, self.KF, self.MIN_PWM, self.MAX_PWM)
+        rpm = pwm2rpm(pwm, self.PWM2RPM_SCALE, self.PWM2RPM_CONST)
+        return rpm
 
     def _get_observation(self):
         """Returns the current observation (state) of the environment.
@@ -610,8 +563,7 @@ class Hexarotor2D():
             ndarray: The state of the quadrotor, of size 2 or 6 depending on QUAD_TYPE.
 
         """
-        # TODO: Rewrite _get_drone_state_vector to use our own dynamics function. DONE
-        full_state = self.hexarotor._get_obs()
+        full_state = self._get_drone_state_vector(0)
         pos, _, rpy, vel, ang_v, _ = np.split(full_state, [3, 7, 10, 13, 16])
         if self.QUAD_TYPE == QuadType.ONE_D:
             # {z, z_dot}.
@@ -629,23 +581,22 @@ class Hexarotor2D():
         #         )
         # Apply observation disturbance.
         obs = deepcopy(self.state)
-        # TODO: double check if we need to add disturbance here!!!!!!!!!!!!!
         if "observation" in self.disturbances:
-            obs = self.disturbances["observation"].apply(obs, self) 
-        # # Concatenate goal info (goal state(s)) for RL
-        # if self.COST == Cost.RL_REWARD and self.TASK == Task.TRAJ_TRACKING:
-        #     # increment by 1 since counter is post-updated after _get_observation(),
-        #     # obs should contain goal state desired for the next state
-        #     next_step = self.ctrl_step_counter + 1
-        #     wp_idx = [
-        #         min(next_step + i, self.X_GOAL.shape[0]-1)
-        #         for i in range(self.obs_goal_horizon)
-        #     ]
-        #     goal_state = self.X_GOAL[wp_idx].flatten()
-        #     obs = np.concatenate([obs, goal_state])
-        # elif self.COST == Cost.RL_REWARD and self.TASK == Task.STABILIZATION:
-        #     goal_state = self.X_GOAL.flatten()
-        #     obs = np.concatenate([obs, goal_state])
+            obs = self.disturbances["observation"].apply(obs, self)
+        # Concatenate goal info (goal state(s)) for RL
+        if self.COST == Cost.RL_REWARD and self.TASK == Task.TRAJ_TRACKING:
+            # increment by 1 since counter is post-updated after _get_observation(),
+            # obs should contain goal state desired for the next state
+            next_step = self.ctrl_step_counter + 1
+            wp_idx = [
+                min(next_step + i, self.X_GOAL.shape[0]-1)
+                for i in range(self.obs_goal_horizon)
+            ]
+            goal_state = self.X_GOAL[wp_idx].flatten()
+            obs = np.concatenate([obs, goal_state])
+        elif self.COST == Cost.RL_REWARD and self.TASK == Task.STABILIZATION:
+            goal_state = self.X_GOAL.flatten()
+            obs = np.concatenate([obs, goal_state])
         return obs
 
     def _get_reward(self):
