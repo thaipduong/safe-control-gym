@@ -16,7 +16,7 @@ To also re-train the GP models from scratch (ca. 30' on a laptop):
 $ chmod +x create_trained_gp_model_hexarotor.sh                              # Make the script executable, if needed
 $ ./create_trained_gp_model_hexarotor.sh                                     # Run the script (ca. 30')
 ```
-> **Note:** this will backup and overwrite `safe-control-gym/experiments/figure6/trained_gp_model/`
+> **Note:** this will backup and overwrite `safe-control-gym/experiments/figure6/trained_gp_model_hexarotor/`
 
 
 
