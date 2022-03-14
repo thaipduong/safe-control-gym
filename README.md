@@ -2,25 +2,6 @@
 
 
 
-
-Physics-based CartPole and Quadrotor [Gym](https://gym.openai.com) environments (using [PyBullet](https://pybullet.org/wordpress/)) with symbolic *a priori* dynamics (using [CasADi](https://web.casadi.org)) for **learning-based control**, and model-free and model-based **reinforcement learning** (RL). 
-
-These environments include (and evaluate) symbolic safety constraints and implement input, parameter, and dynamics disturbances to test the robustness and generalizability of control approaches. [[PDF]](https://arxiv.org/pdf/2108.06266.pdf)
-
-<img src="figures/problem_illustration.jpg" alt="problem illustration" width="800">
-
-```
-@article{brunke2021safe,
-         title={Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning}, 
-         author={Lukas Brunke and Melissa Greeff and Adam W. Hall and Zhaocong Yuan and Siqi Zhou and Jacopo Panerati and Angela P. Schoellig},
-         journal = {Annual Review of Control, Robotics, and Autonomous Systems},
-         year={2021},
-         url = {https://arxiv.org/abs/2108.06266}}
-```
-
-
-
-
 ### (THAI) GP-MPC [[1]](https://ieeexplore.ieee.org/document/8909368) with 2D fully actuated hexarotor
 
 ```
@@ -38,6 +19,25 @@ $ chmod +x create_trained_gp_model_hexarotor.sh                              # M
 $ ./create_trained_gp_model_hexarotor.sh                                     # Run the script (ca. 30')
 ```
 > **Note:** this will backup and overwrite `safe-control-gym/experiments/figure6/trained_gp_model/`
+
+
+
+
+Physics-based CartPole and Quadrotor [Gym](https://gym.openai.com) environments (using [PyBullet](https://pybullet.org/wordpress/)) with symbolic *a priori* dynamics (using [CasADi](https://web.casadi.org)) for **learning-based control**, and model-free and model-based **reinforcement learning** (RL). 
+
+These environments include (and evaluate) symbolic safety constraints and implement input, parameter, and dynamics disturbances to test the robustness and generalizability of control approaches. [[PDF]](https://arxiv.org/pdf/2108.06266.pdf)
+
+<img src="figures/problem_illustration.jpg" alt="problem illustration" width="800">
+
+```
+@article{brunke2021safe,
+         title={Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning}, 
+         author={Lukas Brunke and Melissa Greeff and Adam W. Hall and Zhaocong Yuan and Siqi Zhou and Jacopo Panerati and Angela P. Schoellig},
+         journal = {Annual Review of Control, Robotics, and Autonomous Systems},
+         year={2021},
+         url = {https://arxiv.org/abs/2108.06266}}
+```
+
 
 
 
