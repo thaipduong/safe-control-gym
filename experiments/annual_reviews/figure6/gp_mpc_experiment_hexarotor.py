@@ -24,7 +24,7 @@ def plot_xz_comparison_diag_constraint(prior_run,
     """
     state_inds = [0,2]
     goal = [0, 1]
-    ax = plot_2D_comparison_with_prior(state_inds, prior_run, run, goal, init_ind, dir=dir)
+    fig, ax = plot_2D_comparison_with_prior(state_inds, prior_run, run, goal, init_ind, dir=dir)
     limit_vals = np.array([[-2.1, -1.0],
                            [2.0, 3.1]])
     ax.plot(limit_vals[:,0], limit_vals[:,1], 'r-', label='Limit')
@@ -38,6 +38,7 @@ def plot_xz_comparison_diag_constraint(prior_run,
     ax.set_ylim([-0.05, 1.1])
     ax.set_box_aspect(0.5)
     plt.tight_layout()
+    fig.savefig("/home/erl/repos/journal_zhichao/safe-control-gym/figures/hexarotor_gpmpc.png")
 
 
 def plot_2D_comparison_with_prior(state_inds,
@@ -105,8 +106,7 @@ def plot_2D_comparison_with_prior(state_inds,
     ax.set_aspect('equal')
     ax.axis('equal')
     ax.legend()
-    fig.savefig("/home/erl/repos/journal_zhichao/safe-control-gym/figures/hexarotor_gpmpc.png")
-    return ax
+    return fig, ax
 
 
 def add_2d_cov_ellipse(position,
