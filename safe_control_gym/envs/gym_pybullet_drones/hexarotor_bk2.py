@@ -21,7 +21,7 @@ from safe_control_gym.math_and_models.normalization import normalize_angle
 
 from safe_control_gym.envs.benchmark_env import BenchmarkEnv
 
-class Hexarotor2D(BenchmarkEnv):
+class Hexarotor2D():
     """1D and 2D quadrotor environment task.
 
     Including symbolic model, constraints, randomization, adversarial disturbances,
@@ -140,18 +140,7 @@ class Hexarotor2D(BenchmarkEnv):
         self.info_mse_metric_state_weight = np.array(info_mse_metric_state_weight, ndmin=1, dtype=float)
         # BaseAviary constructor, called after defining the custom args,
         # since some BenchmarkEnv init setup can be task(custom args)-dependent.
-        # Create a hexarotor object
-        self.hexarotor = fadronesim.FAHexarotor()#(mass = self.MASS, J = self.J)
-        self.MASS = self.hexarotor.M
-        self.J = self.hexarotor.J
-        self.GRAVITY_ACC = self.hexarotor.G
-        self.CTRL_TIMESTEP = self.hexarotor.dt
-        self.MAX_THRUST = self.hexarotor.MAX_THRUST
-        self.MAX_XY_TORQUE = self.hexarotor.MAX_XY_TORQUE
-        self.MAX_Z_TORQUE = self.hexarotor.MAX_Z_TORQUE
-        self.GROUND_PLANE_Z = -0.05
-
-        super().__init__(**kwargs)
+        # super().__init__(init_state=init_state, inertial_prop=inertial_prop, **kwargs)
         
         # Custom disturbance info.
         # 1D quad disturbances have lower dimensions
@@ -194,19 +183,28 @@ class Hexarotor2D(BenchmarkEnv):
                 self.INIT_STATE_RAND_INFO.pop(init_name, None)
 
 
+        # Create a hexarotor object
+        self.hexarotor = fadronesim.FAHexarotor()#(mass = self.MASS, J = self.J)
+        self.MASS = self.hexarotor.M
+        self.J = self.hexarotor.J
+        self.GRAVITY_ACC = self.hexarotor.G
+        self.CTRL_TIMESTEP = self.hexarotor.dt
+        self.MAX_THRUST = self.hexarotor.MAX_THRUST
+        self.MAX_XY_TORQUE = self.hexarotor.MAX_XY_TORQUE
+        self.MAX_Z_TORQUE = self.hexarotor.MAX_Z_TORQUE
+        self.GROUND_PLANE_Z = -0.05
+        self.TASK = Task.STABILIZATION
 
-        #self.TASK = Task.STABILIZATION
-
-        # # Create action and observation spaces.
-        # #self.NORMALIZED_RL_ACTION_SPACE = False
-        # self._set_action_space()
-        # self._set_observation_space()
-        # # Store action (input) and observation spaces dimensions.
-        # # if observation is not the same as state, env should also have a `state_space`
-        # # and `state_dim` is queried from it.
-        # self.action_dim = self.action_space.shape[0]
-        # self.obs_dim = self.observation_space.shape[0]
-        # self.state_dim = self.state_space.shape[0]
+        # Create action and observation spaces.
+        self.NORMALIZED_RL_ACTION_SPACE = False
+        self._set_action_space()
+        self._set_observation_space()
+        # Store action (input) and observation spaces dimensions.
+        # if observation is not the same as state, env should also have a `state_space`
+        # and `state_dim` is queried from it.
+        self.action_dim = self.action_space.shape[0]
+        self.obs_dim = self.observation_space.shape[0]
+        self.state_dim = self.state_space.shape[0]
 
         # Decide whether to randomize the inertial properties and how (see info dictionary).
         # self.RANDOMIZED_INERTIAL_PROP = randomized_inertial_prop
@@ -279,7 +277,7 @@ class Hexarotor2D(BenchmarkEnv):
             dict: A dictionary with information about the dynamics and constraints symbolic models.
 
         """
-        super().before_reset()
+        # super().before_reset()
         # PyBullet simulation reset.
         # super()._reset_simulation()
         # Choose randomized or deterministic inertial properties.
@@ -338,13 +336,14 @@ class Hexarotor2D(BenchmarkEnv):
         #                     physicsClientId=self.PYB_CLIENT)
         # # Update BaseAviary internal variables before calling self._get_observation().
         # self._update_and_store_kinematic_information()
-        obs, info = self._get_observation(), self._get_reset_info()
-        obs, info = super().after_reset(obs, info)
+        # obs, info = self._get_observation(), self._get_reset_info()
+        # obs, info = super().after_reset(obs, info)
         # # Return either an observation and dictionary or just the observation.
-        if self.INFO_IN_RESET:
-            return obs, info
-        else:
-            return obs
+        # if self.INFO_IN_RESET:
+        #     return obs, info
+        # else:
+        #     return obs
+        obs = self._get_observation()
         return obs
 
     # def _advance_simulation(self,action):
