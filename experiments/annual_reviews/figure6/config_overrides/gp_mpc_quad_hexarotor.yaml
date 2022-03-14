@@ -13,7 +13,7 @@ algo_config:
     - 1
     - 1
     - 1
-  gp_model_path: './trained_gp_model'
+  gp_model_path: './trained_gp_model_hexarotor'
   train_iterations: 150
   validation_iterations: 1
   optimization_iterations:
@@ -79,10 +79,14 @@ task_config:
       constrained_variable: state
     - constraint_form: default_constraint
       constrained_variable: input
+      lower_bounds:
+        - -0.4
+        - -0.4
+        - -0.006
       upper_bounds:
-        - 0.2
-        - 0.2
-        - 0.002
+        - 0.4
+        - 0.4
+        - 0.006
   done_on_violation: True
   disturbances: null
   init_state_randomization_info:

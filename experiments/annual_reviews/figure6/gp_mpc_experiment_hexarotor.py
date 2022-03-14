@@ -105,6 +105,7 @@ def plot_2D_comparison_with_prior(state_inds,
     ax.set_aspect('equal')
     ax.axis('equal')
     ax.legend()
+    fig.savefig("/home/erl/repos/journal_zhichao/safe-control-gym/figures/hexarotor_gpmpc.png")
     return ax
 
 

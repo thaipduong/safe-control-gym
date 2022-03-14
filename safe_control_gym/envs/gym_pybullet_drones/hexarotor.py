@@ -192,7 +192,10 @@ class Hexarotor2D(BenchmarkEnv):
         if self.QUAD_TYPE == QuadType.ONE_D:
             for init_name in ["init_x", "init_x_dot", "init_theta", "init_theta_dot"]:
                 self.INIT_STATE_RAND_INFO.pop(init_name, None)
-
+        self.hexarotor.reset(init_xyz=np.array([self.INIT_X, 0, self.INIT_Z]),
+                             init_rpys=np.array([0, self.INIT_THETA, 0]),
+                             init_vel=np.array([self.INIT_X_DOT, 0, self.INIT_Z_DOT]),
+                             init_omega=np.array([0, self.INIT_THETA_DOT, 0]))
 
 
         #self.TASK = Task.STABILIZATION
@@ -232,7 +235,7 @@ class Hexarotor2D(BenchmarkEnv):
         self._setup_symbolic()
             
         # Create X_GOAL and U_GOAL references for the assigned task.
-        self.U_GOAL = np.ones(self.action_dim) * self.MASS * self.GRAVITY_ACC / self.action_dim
+        self.U_GOAL = np.array([0., self.MASS * self.GRAVITY_ACC, 0.])
         if self.TASK == Task.STABILIZATION:
             if self.QUAD_TYPE == QuadType.ONE_D:
                 self.X_GOAL = np.hstack(
@@ -289,11 +292,11 @@ class Hexarotor2D(BenchmarkEnv):
             "Iyy": self.J[1, 1],
         }
 
-        # if self.RANDOMIZED_INERTIAL_PROP:
-        #     prop_values = self._randomize_values_by_info(
-        #         prop_values, self.INERTIAL_PROP_RAND_INFO)
-        #     if any(phy_quantity < 0 for phy_quantity in prop_values.values()):
-        #         raise ValueError("[ERROR] in CartPole.reset(), negative randomized inertial properties.")
+        if self.RANDOMIZED_INERTIAL_PROP:
+            prop_values = self._randomize_values_by_info(
+                prop_values, self.INERTIAL_PROP_RAND_INFO)
+            if any(phy_quantity < 0 for phy_quantity in prop_values.values()):
+                raise ValueError("[ERROR] in CartPole.reset(), negative randomized inertial properties.")
         self.OVERRIDDEN_QUAD_MASS = prop_values["M"]
         self.OVERRIDDEN_QUAD_INERTIA = [self.J[0, 0], prop_values["Iyy"], self.J[2, 2]]
         # # Override inertial properties.
@@ -345,7 +348,6 @@ class Hexarotor2D(BenchmarkEnv):
             return obs, info
         else:
             return obs
-        return obs
 
     # def _advance_simulation(self,action):
     #     action6D = [action[0], 0.0, action[1], 0., action[2], 0.]
@@ -369,7 +371,7 @@ class Hexarotor2D(BenchmarkEnv):
 
         """
         # # Get the preprocessed rpm for each motor
-        # rpm = super().before_step(action)
+        action = super().before_step(action)
         # # Determine disturbance force.
         # disturb_force = None
         # passive_disturb = "dynamics" in self.disturbances
@@ -407,10 +409,14 @@ class Hexarotor2D(BenchmarkEnv):
         # done = self._get_done()
         # info = self._get_info()
         action6D = [action[0], 0.0, action[1], 0., action[2], 0.]
-        _, rew, done, info = self.hexarotor.step(action6D)
-        # Thai: This function add penalty to the reward for violating constraints. Should not be used in MPC, only for RL.
-        #obs, rew, done, info = super().after_step(obs, rew, done, info)
+        for s in range(self.PYB_STEPS_PER_CTRL):
+            self.hexarotor.step(action6D)
+        # Standard Gym return.
         obs = self._get_observation()
+        rew = self._get_reward()
+        done = self._get_done()
+        info = self._get_info()
+        obs, rew, done, info = super().after_step(obs, rew, done, info)
         return obs, rew, done, info
     
     # def render(self, mode='human'):
@@ -520,8 +526,8 @@ class Hexarotor2D(BenchmarkEnv):
             raise NotImplementedError(
                 "[ERROR] in Quadrotor._set_action_space(), quad_type not supported."
             )
-        self.action_space = spaces.Box(low=np.zeros(action_dim),
-                                           high=np.array([self.MAX_THRUST,self.MAX_THRUST, self.MAX_XY_TORQUE]) * np.ones(action_dim),
+        self.action_space = spaces.Box(low=-np.array([self.MAX_THRUST,self.MAX_THRUST, self.MAX_XY_TORQUE]),
+                                           high=np.array([self.MAX_THRUST,self.MAX_THRUST, self.MAX_XY_TORQUE]),
                                            dtype=np.float32)
 
 
@@ -533,8 +539,8 @@ class Hexarotor2D(BenchmarkEnv):
             gym.spaces: The bounded observation (state) space, of size 2 or 6 depending on QUAD_TYPE.
 
         """
-        self.x_threshold = 2
-        self.z_threshold = 2
+        self.x_threshold = 4
+        self.z_threshold = 4
         self.theta_threshold_radians = 85 * math.pi / 180
         # Define obs/state bounds, labels and units.
         if self.QUAD_TYPE == QuadType.ONE_D:
@@ -574,7 +580,8 @@ class Hexarotor2D(BenchmarkEnv):
         # Note obs space is often different to state space for RL (with additional task info)
         self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
 
-
+    def _preprocess_control(self, action):
+        return action
     # def _preprocess_control(self, action):
     #     """Converts the action passed to .step() into motors' RPMs (ndarray of shape (4,)).
     #
@@ -680,12 +687,19 @@ class Hexarotor2D(BenchmarkEnv):
         # Control cost.
         if self.COST == Cost.QUADRATIC:
             if self.TASK == Task.STABILIZATION:
-                return float(-1 * self.symbolic.loss(x=self.state,
-                                                     Xr=self.X_GOAL,
-                                                     u=self.current_preprocessed_action,
-                                                     Ur=self.U_GOAL,
-                                                     Q=self.Q,
-                                                     R=self.R)["l"])
+                return 0.
+                # temp = self.symbolic.loss(x=self.state,
+                #                                      Xr=self.X_GOAL,
+                #                                      u=self.current_preprocessed_action,
+                #                                      Ur=self.U_GOAL,
+                #                                      Q=self.Q,
+                #                                      R=self.R)
+                # return float(-1 * self.symbolic.loss(x=self.state,
+                #                                      Xr=self.X_GOAL,
+                #                                      u=self.current_preprocessed_action,
+                #                                      Ur=self.U_GOAL,
+                #                                      Q=self.Q,
+                #                                      R=self.R)["l"])
             if self.TASK == Task.TRAJ_TRACKING:
                 return float(-1 * self.symbolic.loss(x=self.state,
                                                      Xr=self.X_GOAL[self.ctrl_step_counter,:],

@@ -15,7 +15,7 @@ class FAHexarotor(gym.Env):
         # Mass and inertia copied from crazy flie model
         # https://github.com/JacopoPan/gym-pybullet-drones/blob/master/gym_pybullet_drones/assets/cf2x.urdf
         self.M = 0.027 if mass is None else mass#0.1 #
-        self.J = np.diag([2.3951e-5, 2.3951e-5, 3.2347e-5]) if J is None else J#0.25*np.diag([1.0, 1.0, 2.0])#
+        self.J = np.diag([1.4e-5, 1.4e-5, 2.17e-5]) if J is None else J#0.25*np.diag([1.0, 1.0, 2.0])#
         self.J_inv = np.linalg.inv(self.J)
         self.G = 9.8
         self.friction = False

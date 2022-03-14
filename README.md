@@ -21,6 +21,28 @@ These environments include (and evaluate) symbolic safety constraints and implem
 
 
 
+### (THAI) GP-MPC [[1]](https://ieeexplore.ieee.org/document/8909368) with 2D fully actuated hexarotor
+
+```
+$ cd ../experiments/annual_reviews/figure6/                        # Navigate to the experiment folder
+$ chmod +x create_fig6_hexarotor.sh                                          # Make the script executable, if needed
+$ ./create_fig6_hexarotor.sh                                                 # Run the script (ca. 2')
+```
+This will use the models in `safe-control-gym/experiments/figure6/trained_gp_model_hexarotor/` to generate
+
+<img src="figures/hexarotor_gpmpc.png" alt="gp-mpc" width="800">
+
+To also re-train the GP models from scratch (ca. 30' on a laptop):
+```
+$ chmod +x create_trained_gp_model_hexarotor.sh                              # Make the script executable, if needed
+$ ./create_trained_gp_model_hexarotor.sh                                     # Run the script (ca. 30')
+```
+> **Note:** this will backup and overwrite `safe-control-gym/experiments/figure6/trained_gp_model/`
+
+
+
+
+
 ## Install on Ubuntu/macOS
 
 ### Clone repo
