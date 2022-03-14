@@ -1,5 +1,3 @@
-# safe-control-gym
-
 
 
 ### (THAI) GP-MPC [[1]](https://ieeexplore.ieee.org/document/8909368) with 2D fully actuated hexarotor
@@ -19,6 +17,11 @@ $ chmod +x create_trained_gp_model_hexarotor.sh                              # M
 $ ./create_trained_gp_model_hexarotor.sh                                     # Run the script (ca. 30')
 ```
 > **Note:** this will backup and overwrite `safe-control-gym/experiments/figure6/trained_gp_model/`
+
+
+
+
+# safe-control-gym
 
 
 
