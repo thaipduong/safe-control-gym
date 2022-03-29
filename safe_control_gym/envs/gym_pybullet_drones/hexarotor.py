@@ -90,7 +90,7 @@ class Hexarotor2D(BenchmarkEnv):
     }
 
     TASK_INFO = {
-        "stabilization_goal": [0, 1],
+        "stabilization_goal": [-0.4, 0.4],
         "stabilization_goal_tolerance": 0.05,
         "trajectory_type": "circle",
         "num_cycles": 1,
