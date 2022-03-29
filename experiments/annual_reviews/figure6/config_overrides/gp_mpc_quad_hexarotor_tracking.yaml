@@ -51,9 +51,9 @@ algo_config:
       constrained_variable: state
     - constraint_form: linear_constraint
       A:
-        - [ 0.2, 0.0, 1.0, 0.0, 0.0, 0.0 ]
+        - [ 0.8, 0.0, 1.0, 0.0, 0.0, 0.0 ]
       b:
-        - 0.1
+        - 0.4
       constrained_variable: state
   input_mask:
     - 0

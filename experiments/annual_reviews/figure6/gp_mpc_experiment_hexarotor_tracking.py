@@ -13,7 +13,7 @@ from functools import partial
 from safe_control_gym.utils.registration import make
 from safe_control_gym.utils.configuration import ConfigFactory
 
-goal = [0., 0.6]
+goal = [-0.4, 0.6]
 def plot_xz_comparison_diag_constraint(prior_run,
                                        run,
                                        init_ind,
@@ -28,7 +28,7 @@ def plot_xz_comparison_diag_constraint(prior_run,
     limit_vals = np.array([[-2.1, -1.0],
                            [2.0, 3.1]])
     ax.plot(limit_vals[:,0], limit_vals[:,1], 'r-', label='Limit')
-    limit_vals = np.array([[-1., 0.6],
+    limit_vals = np.array([[-1., 1.2],
                            [0.5, 0.]])
     ax.plot(limit_vals[:,0], limit_vals[:,1], 'r-', label='Limit')
     ax.legend(loc='lower center', bbox_to_anchor=(0.5, 1.05),

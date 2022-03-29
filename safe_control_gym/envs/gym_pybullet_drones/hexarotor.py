@@ -90,7 +90,7 @@ class Hexarotor2D(BenchmarkEnv):
     }
 
     TASK_INFO = {
-        "stabilization_goal": [-0.4, 0.4],
+        "stabilization_goal": [-0.4, 0.6],
         "stabilization_goal_tolerance": 0.05,
         "trajectory_type": "circle",
         "num_cycles": 1,
@@ -145,7 +145,7 @@ class Hexarotor2D(BenchmarkEnv):
         self.MASS = self.hexarotor.M
         self.J = self.hexarotor.J
         self.GRAVITY_ACC = self.hexarotor.G
-        self.CTRL_TIMESTEP = self.hexarotor.dt
+        #self.CTRL_TIMESTEP = self.hexarotor.dt
         self.MAX_THRUST = self.hexarotor.MAX_THRUST
         self.MAX_XY_TORQUE = self.hexarotor.MAX_XY_TORQUE
         self.MAX_Z_TORQUE = self.hexarotor.MAX_Z_TORQUE
