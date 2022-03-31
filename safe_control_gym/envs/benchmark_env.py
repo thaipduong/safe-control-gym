@@ -58,7 +58,7 @@ class BenchmarkEnv(gym.Env):
                  verbose: bool = False,
                  normalized_rl_action_space: bool = False,
                  # Task.
-                 task: Task = Task.STABILIZATION,
+                 task: Task = Task.TRAJ_TRACKING,#Task.STABILIZATION,
                  task_info=None,
                  cost: Cost = Cost.RL_REWARD,
                  pyb_freq: int = 50,

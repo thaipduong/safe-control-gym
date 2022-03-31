@@ -701,12 +701,13 @@ class Hexarotor2D(BenchmarkEnv):
                 #                                      Q=self.Q,
                 #                                      R=self.R)["l"])
             if self.TASK == Task.TRAJ_TRACKING:
-                return float(-1 * self.symbolic.loss(x=self.state,
-                                                     Xr=self.X_GOAL[self.ctrl_step_counter,:],
-                                                     u=self.current_preprocessed_action,
-                                                     Ur=self.U_GOAL,
-                                                     Q=self.Q,
-                                                     R=self.R)["l"])
+                return 0.
+                # float(-1 * self.symbolic.loss(x=self.state,
+                #                                      Xr=self.X_GOAL[self.ctrl_step_counter,:],
+                #                                      u=self.current_preprocessed_action,
+                #                                      Ur=self.U_GOAL,
+                #                                      Q=self.Q,
+                #                                      R=self.R)["l"])
 
     def _get_done(self):
         """Computes the conditions for termination of an episode.

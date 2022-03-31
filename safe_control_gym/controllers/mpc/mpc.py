@@ -292,7 +292,8 @@ class MPC(BaseController):
             env=None,
             render=False,
             logging=False,
-            max_steps=100
+            max_steps=100,
+            gp_training = False
             ):
         """Runs evaluation with current policy.
         
@@ -316,13 +317,15 @@ class MPC(BaseController):
         self.reset_results_dict()
         self.results_dict['obs'].append(obs)
         i = 0
-        if self.env.TASK == Task.STABILIZATION:
+        if self.env.TASK == Task.STABILIZATION or gp_training:
             MAX_STEPS = max_steps
+        # TODO: This line below is problematic as it does not provide the right matrix size of GP to work.
         elif self.env.TASK == Task.TRAJ_TRACKING:
             MAX_STEPS = self.traj.shape[1]
         else:
             raise("Undefined Task")
         self.terminate_loop = False
+        # TODO: This line below can be problematic as X_GOAL is an array now instead of one point.
         while np.linalg.norm(obs - env.X_GOAL) > 1e-3 and i < MAX_STEPS and not(self.terminate_loop):
             action = self.select_action(obs)
             if self.terminate_loop:
@@ -361,4 +364,6 @@ class MPC(BaseController):
         except ValueError:
             raise Exception("[ERROR] mpc.run().py: MPC could not find a solution for the first step given the initial conditions. "
                   "Check to make sure initial conditions are feasible.")
+        if self.results_dict['obs'].shape[0] != 2:
+            print("################################################ SOMETHING IS WRONG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         return deepcopy(self.results_dict)

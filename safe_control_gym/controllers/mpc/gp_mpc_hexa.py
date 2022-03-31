@@ -568,7 +568,7 @@ class GPMPC(MPC):
                 init_state = init_state_samples[i,:]
                 # Collect data with prior controller.
                 run_env = self.env_func(init_state=init_state, randomized_init=False, seed=int(seeds[i]))
-                episode_results = self.prior_ctrl.run(env=run_env, max_steps=1)
+                episode_results = self.prior_ctrl.run(env=run_env, max_steps=1, gp_training = True)
                 run_env.close()
                 x_obs = episode_results['obs'][-3:,:]
                 u_seq = episode_results['action'][-1:,:]
