@@ -440,9 +440,9 @@ class BenchmarkEnv(gym.Env):
 
         """
         # Get trajectory type.
-        valid_traj_type = ["circle", "square", "figure8"]
+        valid_traj_type = ["circle", "square", "figure8", "pwlinear"]
         if traj_type not in valid_traj_type:
-            raise ValueError("Trajectory type should be one of [circle, square, figure8].")
+            raise ValueError("Trajectory type should be one of [circle, square, figure8, pwlinear].")
         traj_period = traj_length / num_cycles
         direction_list = ["x", "y", "z"]
         # Get coordinates indexes.
@@ -506,6 +506,9 @@ class BenchmarkEnv(gym.Env):
                 t, traj_period, scaling)
         elif traj_type == "square":
             coords_a, coords_b, coords_a_dot, coords_b_dot = self._square(
+                t, traj_period, scaling)
+        elif traj_type == "pwlinear":
+            coords_a, coords_b, coords_a_dot, coords_b_dot = self._pwlinear(
                 t, traj_period, scaling)
         # Initialize position and velocity references.
         pos_ref = np.zeros((3,))
@@ -582,10 +585,10 @@ class BenchmarkEnv(gym.Env):
             scaling (float, optional): Scaling factor for the trajectory.
 
         Returns:
-            float: The position in the first coordinate. 
-            float: The position in the second coordinate. 
-            float: The velocity in the first coordinate. 
-            float: The velocity in the second coordinate. 
+            float: The position in the first coordinate.
+            float: The position in the second coordinate.
+            float: The velocity in the first coordinate.
+            float: The velocity in the second coordinate.
 
         """
         # Compute time for each segment to complete.
@@ -623,6 +626,66 @@ class BenchmarkEnv(gym.Env):
             coords_b = 0.0
             coords_a_dot = traverse_speed
             coords_b_dot = 0.0
+        return coords_a, coords_b, coords_a_dot, coords_b_dot
+
+    def _pwlinear(self,
+                t,
+                traj_period,
+                scaling
+                ):
+        """Computes the coordinates of a square trajectory at time t.
+
+        Args:
+            t (float): The time at which we want to sample one trajectory point.
+            traj_period (float): The period of the trajectory in seconds.
+            scaling (float, optional): Scaling factor for the trajectory.
+
+        Returns:
+            float: The position in the first coordinate.
+            float: The position in the second coordinate.
+            float: The velocity in the first coordinate.
+            float: The velocity in the second coordinate.
+
+        """
+        # traj_length = np.sqrt((-0.4 + 0.75)**2 + (0.6 - 0.1)**2) + np.sqrt((-0.4 - 0.25)**2 + (0.6 - 0.05)**2)
+        # T = 5
+        # seg1 = T*np.sqrt((-0.4 + 0.75) ** 2 + (0.6 - 0.1) ** 2) / traj_length
+        # seg2 = T - seg1
+        # if t < seg1:
+        #     coords_a = 0.1 + t*0.5/seg1
+        #     coords_b = -0.75 + t*0.35/seg1
+        #     coords_a_dot = 0.5/seg1
+        #     coords_b_dot = 0.35/seg1
+        # elif t < T:
+        #     coords_a = 0.6 - (t-seg1)*0.55/seg2
+        #     coords_b = -0.4 + (t-seg1)*0.65/seg2
+        #     coords_a_dot = -0.55/seg2
+        #     coords_b_dot = 0.65/seg2
+        # else:
+        #     coords_a = 0.6 - (T-seg1) * 0.55 / seg2
+        #     coords_b = -0.4 + (T-seg1) * 0.65 / seg2
+        #     coords_a_dot = 0
+        #     coords_b_dot = 0
+
+        traj_length = np.sqrt((-0.4 + 0.75) ** 2 + (0.6 - 0.1) ** 2)
+        T1 = 5
+        T2 = 50
+        if t < T1:
+            coords_a = 0.1 + t * 0.5 / T1
+            coords_b = -0.75 + t * 0.35 / T1
+            coords_a_dot = 0.5 / T1
+            coords_b_dot = 0.35 / T1
+        elif t < T2:
+            coords_a = 0.6 - (t-T1)*0.55/T2
+            coords_b = -0.4 + (t-T1)*0.65/T2
+            coords_a_dot = -0.55/T2
+            coords_b_dot = 0.65/T2
+        else:
+            coords_a = 0.6 - (T2-T1)*0.55/T2
+            coords_b = -0.4 + (T2-T1)*0.65/T2
+            coords_a_dot = -0.55/T2
+            coords_b_dot = 0.65/T2
+
         return coords_a, coords_b, coords_a_dot, coords_b_dot
 
     def _plot_trajectory(self,

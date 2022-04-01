@@ -92,10 +92,10 @@ class Hexarotor2D(BenchmarkEnv):
     TASK_INFO = {
         "stabilization_goal": [-0.4, 0.6],
         "stabilization_goal_tolerance": 0.05,
-        "trajectory_type": "circle",
+        "trajectory_type": "pwlinear",
         "num_cycles": 1,
         "trajectory_plane": "zx",
-        "trajectory_position_offset": [0.5, 0],
+        "trajectory_position_offset": [0, 0],
         "trajectory_scale": -0.5
     }
 

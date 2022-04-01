@@ -327,10 +327,15 @@ class MPC(BaseController):
         self.terminate_loop = False
         # TODO: This line below can be problematic as X_GOAL is an array now instead of one point.
         while np.linalg.norm(obs - env.X_GOAL) > 1e-3 and i < MAX_STEPS and not(self.terminate_loop):
+            # if gp_training:
+            #     action = self.env.action_space.sample()
+            # else:
+            #     action = self.select_action(obs)
             action = self.select_action(obs)
             if self.terminate_loop:
                 print("Infeasible MPC Problem")
-                break
+                action = self.env.action_space.sample()
+                #break
             # Repeat input for more efficient control.
             obs, reward, done, info = env.step(action)
             self.results_dict['obs'].append(obs)
@@ -359,7 +364,7 @@ class MPC(BaseController):
                 ep_returns.std())
         self.results_dict['obs'] = np.vstack(self.results_dict['obs'])
         try:
-            self.results_dict['reward'] = np.vstack(self.results_dict['reward'])
+            #self.results_dict['reward'] = np.vstack(self.results_dict['reward'])
             self.results_dict['action'] = np.vstack(self.results_dict['action'])
         except ValueError:
             raise Exception("[ERROR] mpc.run().py: MPC could not find a solution for the first step given the initial conditions. "

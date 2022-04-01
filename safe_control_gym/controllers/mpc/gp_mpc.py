@@ -105,8 +105,8 @@ class GPMPC(MPC):
             q_mpc=q_mpc,
             r_mpc=r_mpc,
             use_prev_start=use_prev_start,
-            output_dir=output_dir,
-            additional_constraints=additional_constraints,
+            output_dir=output_dir#,
+            #additional_constraints=additional_constraints,
         )
         self.prior_ctrl.reset()
         super().__init__(
