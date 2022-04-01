@@ -6,7 +6,7 @@ physics: pyb
 gui: False
 quad_type: 2
 normalized_rl_action_space: False
-episode_len_sec: 5
+episode_len_sec: 10
 # State initialization
 init_state: null
 randomized_init: False

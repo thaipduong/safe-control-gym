@@ -186,7 +186,7 @@ if __name__ == "__main__":
         # Run with the learned gp model.
 
         run_results = ctrl.run(env=test_env,
-                               max_steps=50)
+                               max_steps=100)
         ctrl.close()
         # Plot the results.
         #prior_run = munch.munchify(prior_results)
