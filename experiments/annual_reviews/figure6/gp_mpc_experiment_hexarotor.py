@@ -23,7 +23,7 @@ def plot_xz_comparison_diag_constraint(prior_run,
 
     """
     state_inds = [0,2]
-    goal = [0, 1]
+    goal = [-0.4, 0.6]
     fig, ax = plot_2D_comparison_with_prior(state_inds, prior_run, run, goal, init_ind, dir=dir)
     limit_vals = np.array([[-2.1, -1.0],
                            [2.0, 3.1]])

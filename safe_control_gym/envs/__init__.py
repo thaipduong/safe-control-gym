@@ -14,3 +14,7 @@ register(id="quadrotor",
 register(id="hexarotor",
          entry_point="safe_control_gym.envs.gym_pybullet_drones.hexarotor:Hexarotor2D",
          config_entry_point="safe_control_gym.envs.gym_pybullet_drones:hexarotor.yaml")
+
+register(id="hexarotor_tracking",
+         entry_point="safe_control_gym.envs.gym_pybullet_drones.hexarotor:Hexarotor2D",
+         config_entry_point="safe_control_gym.envs.gym_pybullet_drones:hexarotor_tracking.yaml")

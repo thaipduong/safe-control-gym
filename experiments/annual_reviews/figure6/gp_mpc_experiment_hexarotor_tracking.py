@@ -43,7 +43,7 @@ def plot_xz_comparison_diag_constraint(traj,
     ax.set_ylim([-0.05, 1.1])
     ax.set_box_aspect(0.5)
     plt.tight_layout()
-    fig.savefig("/home/erl/repos/journal_zhichao/safe-control-gym/figures/hexarotor_gpmpc.png")
+    fig.savefig("/home/erl/repos/journal_zhichao/safe-control-gym/figures/hexarotor_gpmpc_tracking.png")
 
 
 def plot_2D_comparison_with_prior(state_inds,
