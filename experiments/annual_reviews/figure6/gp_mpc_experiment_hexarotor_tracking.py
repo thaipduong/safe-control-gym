@@ -236,4 +236,8 @@ if __name__ == "__main__":
         #prior_run = munch.munchify(prior_results)
         run = munch.munchify(run_results)
         plot_xz_comparison_diag_constraint(ctrl.env.X_GOAL, run, 1)
+        np.savez(
+            "/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/small_drone/gpmpc_results.npz",
+            traj = ctrl.env.X_GOAL, run = run)
+
         plt.show()

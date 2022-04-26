@@ -566,7 +566,7 @@ class GPMPC(MPC):
 
             load_from_file = True
             if load_from_file:
-                gpmpc_data = np.load("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/statecontroldata_rand_good1.npz")
+                gpmpc_data = np.load("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/small_drone/statecontroldata_rand_good1.npz")
                 x_seq_all = gpmpc_data["x_seq_all"]
                 x_next_seq_all = gpmpc_data["x_next_seq_all"]
                 u_seq_all = gpmpc_data["u_seq_all"]
@@ -597,7 +597,7 @@ class GPMPC(MPC):
                 train_inputs_i, train_targets_i = self.preprocess_training_data(x_seq, u_seq, x_next_seq)
                 train_inputs.append(train_inputs_i)
                 train_targets.append(train_targets_i)
-            np.savez("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/statecontroldata_rand.npz", x_seq_all = x_seq_all, x_next_seq_all = x_next_seq_all, u_seq_all = u_seq_all)
+            np.savez("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/small_drone/statecontroldata_rand.npz", x_seq_all = x_seq_all, x_next_seq_all = x_next_seq_all, u_seq_all = u_seq_all)
             ###########
         else:
             train_inputs = input_data
