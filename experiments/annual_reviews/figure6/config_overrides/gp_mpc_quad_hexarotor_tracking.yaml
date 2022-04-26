@@ -76,7 +76,7 @@ algo_config:
 
 seed: 79123 #9078
 task_config:
-  ctrl_freq: 10
+  ctrl_freq: 40
   pyb_freq: 240
   info_in_reset: True
   cost: quadratic
@@ -86,13 +86,13 @@ task_config:
     - constraint_form: default_constraint
       constrained_variable: input
       lower_bounds:
-        - -0.4
-        - -0.4
-        - -0.006
+        - -1000000.0
+        - -1000000.0
+        - -1000000.0
       upper_bounds:
-        - 0.4
-        - 0.4
-        - 0.006
+        - 1000000.0
+        - 1000000.0
+        - 1000000.0
   done_on_violation: True
   disturbances: null
   init_state_randomization_info:

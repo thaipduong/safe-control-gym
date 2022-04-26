@@ -332,9 +332,9 @@ class MPC(BaseController):
             # else:
             #     action = self.select_action(obs)
             action = self.select_action(obs)
-            if self.terminate_loop:
+            if self.terminate_loop or gp_training:
                 print("Infeasible MPC Problem")
-                action = self.env.action_space.sample()
+                action = 2*self.env.action_space.sample()
                 #break
             # Repeat input for more efficient control.
             obs, reward, done, info = env.step(action)
@@ -369,6 +369,6 @@ class MPC(BaseController):
         except ValueError:
             raise Exception("[ERROR] mpc.run().py: MPC could not find a solution for the first step given the initial conditions. "
                   "Check to make sure initial conditions are feasible.")
-        if self.results_dict['obs'].shape[0] != 2:
-            print("################################################ SOMETHING IS WRONG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # if self.results_dict['obs'].shape[0] != 2:
+        #     print("################################################ SOMETHING IS WRONG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         return deepcopy(self.results_dict)

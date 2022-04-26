@@ -686,30 +686,53 @@ class BenchmarkEnv(gym.Env):
         #     coords_a_dot = -0.55/T2
         #     coords_b_dot = 0.65/T2
 
+        # T1 = 2
+        # T2 = 1.5
+        # T3 = 1.5
+        # if t < T1:
+        #     coords_b = -0.75 + t * 0.15 / T1
+        #     coords_a = 0.1 + t * 0.2 / T1
+        #     coords_b_dot = 0.15 / T1
+        #     coords_a_dot = 0.2 / T1
+        # elif t < T1+T2:
+        #     coords_b = -0.6 + (t-T1)*0.5/T2
+        #     coords_a = 0.3 + (t-T1)*0.1/T2
+        #     coords_b_dot = 0.5/T2
+        #     coords_a_dot = 0.1/T2
+        # elif t < T1+T2+T3:
+        #     coords_b = -0.1 + (t-T2-T1)*0.3/T3
+        #     coords_a = 0.4 - (t-T2-T1)*0.4/T3
+        #     coords_b_dot = 0.3/T3
+        #     coords_a_dot = -0.4/T3
+        # else:
+        #     coords_b = -0.1 + (T3)*0.3/T3
+        #     coords_a = 0.4 - (T3)*0.4/T3
+        #     coords_b_dot = 0.3/T3
+        #     coords_a_dot = -0.4/T3
+
         T1 = 2
         T2 = 1.5
         T3 = 1.5
         if t < T1:
-            coords_b = -0.75 + t * 0.15 / T1
-            coords_a = 0.1 + t * 0.2 / T1
-            coords_b_dot = 0.15 / T1
-            coords_a_dot = 0.2 / T1
-        elif t < T1+T2:
-            coords_b = -0.6 + (t-T1)*0.5/T2
-            coords_a = 0.3 + (t-T1)*0.1/T2
-            coords_b_dot = 0.5/T2
-            coords_a_dot = 0.1/T2
-        elif t < T1+T2+T3:
-            coords_b = -0.1 + (t-T2-T1)*0.3/T3
-            coords_a = 0.4 - (t-T2-T1)*0.4/T3
-            coords_b_dot = 0.3/T3
-            coords_a_dot = -0.4/T3
+            coords_b = -1.0 + t * 0.4 / T1
+            coords_a = 0.0 + t * 0.3 / T1
+            coords_b_dot = 0.4 / T1
+            coords_a_dot = 0.3 / T1
+        elif t < T1 + T2:
+            coords_b = -0.6 + (t - T1) * 0.5 / T2
+            coords_a = 0.3 + (t - T1) * 0.1 / T2
+            coords_b_dot = 0.5 / T2
+            coords_a_dot = 0.1 / T2
+        elif t < T1 + T2 + T3:
+            coords_b = -0.1 + (t - T2 - T1) * 0.3 / T3
+            coords_a = 0.4 - (t - T2 - T1) * 0.4 / T3
+            coords_b_dot = 0.3 / T3
+            coords_a_dot = -0.4 / T3
         else:
-            coords_b = -0.1 + (T3)*0.3/T3
-            coords_a = 0.4 - (T3)*0.4/T3
-            coords_b_dot = 0.3/T3
-            coords_a_dot = -0.4/T3
-
+            coords_b = -0.1 + (T3) * 0.3 / T3
+            coords_a = 0.4 - (T3) * 0.4 / T3
+            coords_b_dot = 0.0
+            coords_a_dot = 0.0
         return coords_a, coords_b, coords_a_dot, coords_b_dot
 
     def _plot_trajectory(self,

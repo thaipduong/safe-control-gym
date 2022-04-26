@@ -563,21 +563,41 @@ class GPMPC(MPC):
                                                  random_state=self.seed)
             input_samples = np.array(input_samples) # not being used currently
             seeds = self.env.np_random.randint(0,99999, size=self.train_iterations + self.validation_iterations)
+
+            load_from_file = True
+            if load_from_file:
+                gpmpc_data = np.load("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/statecontroldata_rand_good1.npz")
+                x_seq_all = gpmpc_data["x_seq_all"]
+                x_next_seq_all = gpmpc_data["x_next_seq_all"]
+                u_seq_all = gpmpc_data["u_seq_all"]
+            else:
+                x_seq_all = []
+                u_seq_all = []
+                x_next_seq_all = []
             for i in range(self.train_iterations + self.validation_iterations):
-                # For random initial state training.
-                init_state = init_state_samples[i,:]
-                # Collect data with prior controller.
-                run_env = self.env_func(init_state=init_state, randomized_init=False, seed=int(seeds[i]))
-                episode_results = self.prior_ctrl.run(env=run_env, max_steps=1, gp_training = True)
-                run_env.close()
-                x_obs = episode_results['obs'][-3:,:]
-                u_seq = episode_results['action'][-1:,:]
-                run_env.close()
-                x_seq = x_obs[:-1,:]
-                x_next_seq = x_obs[1:,:]
+                if load_from_file:
+                    x_seq = x_seq_all[i]
+                    x_next_seq = x_next_seq_all[i]
+                    u_seq = u_seq_all[i]
+                else:
+                    # For random initial state training.
+                    init_state = init_state_samples[i,:]
+                    # Collect data with prior controller.
+                    run_env = self.env_func(init_state=init_state, randomized_init=False, seed=int(seeds[i]))
+                    episode_results = self.prior_ctrl.run(env=run_env, max_steps=1, gp_training = True)
+                    run_env.close()
+                    x_obs = episode_results['obs'][-3:,:]
+                    u_seq = episode_results['action'][-1:,:]
+                    run_env.close()
+                    x_seq = x_obs[:-1,:]
+                    x_next_seq = x_obs[1:,:]
+                    x_seq_all.append(x_seq)
+                    x_next_seq_all.append(x_next_seq)
+                    u_seq_all.append(u_seq)
                 train_inputs_i, train_targets_i = self.preprocess_training_data(x_seq, u_seq, x_next_seq)
                 train_inputs.append(train_inputs_i)
                 train_targets.append(train_targets_i)
+            np.savez("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/statecontroldata_rand.npz", x_seq_all = x_seq_all, x_next_seq_all = x_next_seq_all, u_seq_all = u_seq_all)
             ###########
         else:
             train_inputs = input_data

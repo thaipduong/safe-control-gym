@@ -12,9 +12,55 @@ from functools import partial
 
 from safe_control_gym.utils.registration import make
 from safe_control_gym.utils.configuration import ConfigFactory
+import matplotlib.patches as patches
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+plt.rcParams['text.usetex'] = True
 
 goal = [-0.4, 0.6]
 def plot_xz_comparison_diag_constraint(traj,
+                                       run,
+                                       init_ind,
+                                       dir=None
+                                       ):
+    """
+
+    """
+    state_inds = [0,2]
+    fig, ax = plt.subplots()
+    path = [[-1.2, -0.1], [-1.2, 0.8], [-0.3, 0.8]]
+    ax.add_patch(patches.Polygon(path, alpha=1, facecolor="silver"))
+    path = [[0.6, -0.08], [0.6, 0.8], [-0.5, 0.8]]
+    ax.add_patch(patches.Polygon(path, alpha=1, facecolor="silver"))
+
+    limit_vals = np.array([[-2.1, -1.0],
+                           [-7 / 18, 1.1 - 7 / 18]])
+    ax.plot(limit_vals[:, 0], limit_vals[:, 1], 'r-', label='Obstacle boundary')
+    limit_vals = np.array([[-7 / 18, 1.1 - 7 / 18],
+                           [0.6, -0.08]])
+    ax.plot(limit_vals[:, 0], limit_vals[:, 1], 'r-')
+
+
+    ax.plot(traj[:, 0], traj[:, 2], 'b-', label='Path')
+    #ax.plot(run[:, 0], run[:, 2], 'g-', label='Robot Position')
+
+    # ax.plot(prior_run.obs[:,state_inds[0]], prior_run.obs[:,state_inds[1]], '-', label='Linear MPC')
+    ax.plot(run.obs[:, state_inds[0]], run.obs[:, state_inds[1]], 'g-', label='Robot Position')
+
+    if dir is not None:
+        np.savetxt(os.path.join(dir, 'limit.csv'), limit_vals, delimiter=',', header='x_limit,y_limit')
+    ax.legend(loc='upper right', fancybox=True, shadow=True)
+    ax.set_xlabel('X Position [m]')
+    ax.set_ylabel('Z Position [m]')
+    ax.set_xlim([-1.2, 0.6])
+    ax.set_ylim([-0.05, 0.8])
+    ax.set_box_aspect(0.5)
+
+    plt.tight_layout()
+    fig.savefig("/home/erl/repos/journal_zhichao/safe-control-gym/figures/hexarotor_gpmpc_tracking.pdf", bbox_inches='tight', pad_inches=0.1)
+    plt.show(block=True)
+
+def plot_xz_comparison_diag_constraint_backup(traj,
                                        run,
                                        init_ind,
                                        dir=None
@@ -44,8 +90,6 @@ def plot_xz_comparison_diag_constraint(traj,
     ax.set_box_aspect(0.5)
     plt.tight_layout()
     fig.savefig("/home/erl/repos/journal_zhichao/safe-control-gym/figures/hexarotor_gpmpc_tracking.png")
-
-
 def plot_2D_comparison_with_prior(state_inds,
                                   prior_run,
                                   run, traj,
