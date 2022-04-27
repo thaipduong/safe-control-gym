@@ -26,6 +26,9 @@ def plot_xz_comparison_diag_constraint(traj,
     """
 
     """
+    linewidth = 3
+    fontsize = 12
+    fontsize_ticks = 16
     state_inds = [0,2]
     fig, ax = plt.subplots()
     path = [[-1.2, -0.1], [-1.2, 0.8], [-0.3, 0.8]]
@@ -35,26 +38,29 @@ def plot_xz_comparison_diag_constraint(traj,
 
     limit_vals = np.array([[-2.1, -1.0],
                            [-7 / 18, 1.1 - 7 / 18]])
-    ax.plot(limit_vals[:, 0], limit_vals[:, 1], 'r-', label='Obstacle boundary')
+    ax.plot(limit_vals[:, 0], limit_vals[:, 1], 'r-', label='Obstacle boundary', linewidth=linewidth)
     limit_vals = np.array([[-7 / 18, 1.1 - 7 / 18],
                            [0.6, -0.08]])
-    ax.plot(limit_vals[:, 0], limit_vals[:, 1], 'r-')
+    ax.plot(limit_vals[:, 0], limit_vals[:, 1], 'r-', linewidth=linewidth)
 
 
-    ax.plot(traj[:, 0], traj[:, 2], 'b-', label='Path')
+    ax.plot(traj[:, 0], traj[:, 2], 'b-', label='Path', linewidth=linewidth)
     #ax.plot(run[:, 0], run[:, 2], 'g-', label='Robot Position')
 
     # ax.plot(prior_run.obs[:,state_inds[0]], prior_run.obs[:,state_inds[1]], '-', label='Linear MPC')
-    ax.plot(run[:, state_inds[0]], run[:, state_inds[1]], 'g-', label='Robot Position')
+    ax.plot(run[:, state_inds[0]], run[:, state_inds[1]], 'g-', label='Robot Position', linewidth=linewidth)
 
     if dir is not None:
         np.savetxt(os.path.join(dir, 'limit.csv'), limit_vals, delimiter=',', header='x_limit,y_limit')
-    ax.legend(loc='upper right', fancybox=True, shadow=True)
-    ax.set_xlabel('X Position [m]')
-    ax.set_ylabel('Z Position [m]')
-    ax.set_xlim([-1.2, 0.6])
-    ax.set_ylim([-0.05, 0.8])
+    ax.legend(loc='upper right', fancybox=True, shadow=True, fontsize=fontsize)
+    ax.set_xlabel('X Position [m]', fontsize=fontsize_ticks)
+    ax.set_ylabel('Z Position [m]', fontsize=fontsize_ticks)
+    ax.set_xlim([-1.05, 0.3])
+    ax.set_ylim([-0.05, 0.75])
     ax.set_box_aspect(0.5)
+    plt.xticks(fontsize=fontsize_ticks)
+    plt.yticks(fontsize=fontsize_ticks)
+
 
     plt.tight_layout()
     fig.savefig("/home/erl/repos/journal_zhichao/safe-control-gym/figures/hexarotor_gpmpc_tracking.pdf", bbox_inches='tight', pad_inches=0.1)
@@ -195,49 +201,10 @@ def add_2d_cov_ellipse(position,
 
 
 if __name__ == "__main__":
-    fac = ConfigFactory()
-    fac.add_argument("--train_only", type=bool, default=False, help="True if only training is performed.")
-    config = fac.merge()
-    # Create environment.
-    env_func = partial(make,
-                       config.task,
-                       seed=config.seed,
-                       **config.task_config
-                       )
-    # Create GP controller.
-    ctrl = make(config.algo,
-                env_func,
-                **config.algo_config
-                )
-    ctrl.reset()
-    # Initial state for comparison.
-    init_state = {'init_x': -1.0,
-                  'init_x_dot': 0.0,
-                  'init_z': 0.0,
-                  'init_z_dot': 0.0,
-                  'init_theta': 0.0,
-                  'init_theta_dot': 0.0
-                  }
-    # Run the prior controller.
-    test_env = env_func(init_state=init_state,
-                        randomized_init=False)
-    #prior_results = ctrl.prior_ctrl.run(env=test_env,
-    #                                    max_steps=30)
+    data = np.load(
+        "/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/big_drone/run3_x2/gpmpc_results.npz", allow_pickle=True)
+    traj = data["traj"]
+    run = data["run"]
 
-    # Learn the gp by collecting training points.
-    ctrl.learn()
-    if not config.train_only:
-        # Run with the learned gp model.
-
-        run_results = ctrl.run(env=test_env,
-                               max_steps=100)
-        ctrl.close()
-        # Plot the results.
-        #prior_run = munch.munchify(prior_results)
-        run = munch.munchify(run_results)
-
-        np.savez(
-            "/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/small_drone/gpmpc_results.npz",
-            traj = ctrl.env.X_GOAL, run = run_results["obs"])
-        plot_xz_comparison_diag_constraint(ctrl.env.X_GOAL, run.obs, 1)
-        plt.show()
+    plot_xz_comparison_diag_constraint(traj, run, 1)
+    plt.show()

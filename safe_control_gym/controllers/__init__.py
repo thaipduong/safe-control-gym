@@ -31,6 +31,10 @@ register(id="gp_mpc_hexa",
          entry_point="safe_control_gym.controllers.mpc.gp_mpc_hexa:GPMPC",
          config_entry_point="safe_control_gym.controllers.mpc:gp_mpc.yaml")
 
+register(id="gp_mpc_hexa_bigdrone",
+         entry_point="safe_control_gym.controllers.mpc.gp_mpc_hexa_bigdrone:GPMPC",
+         config_entry_point="safe_control_gym.controllers.mpc:gp_mpc_bigdrone.yaml")
+
 register(id="mpsc",
          entry_point="safe_control_gym.controllers.mpsc.mpsc:MPSC",
          config_entry_point="safe_control_gym.controllers.mpsc:mpsc.yaml")

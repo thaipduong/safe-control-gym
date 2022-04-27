@@ -710,9 +710,9 @@ class BenchmarkEnv(gym.Env):
         #     coords_b_dot = 0.3/T3
         #     coords_a_dot = -0.4/T3
 
-        T1 = 2
-        T2 = 1.5
-        T3 = 1.5
+        T1 = 4
+        T2 = 3
+        T3 = 3
         if t < T1:
             coords_b = -1.0 + t * 0.4 / T1
             coords_a = 0.0 + t * 0.3 / T1

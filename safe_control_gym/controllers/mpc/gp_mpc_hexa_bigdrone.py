@@ -564,9 +564,9 @@ class GPMPC(MPC):
             input_samples = np.array(input_samples) # not being used currently
             seeds = self.env.np_random.randint(0,99999, size=self.train_iterations + self.validation_iterations)
 
-            load_from_file = False
+            load_from_file = True
             if load_from_file:
-                gpmpc_data = np.load("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/small_drone/statecontroldata_rand_good1.npz")
+                gpmpc_data = np.load("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/big_drone/run3_x2/statecontroldata_rand.npz")
                 x_seq_all = gpmpc_data["x_seq_all"]
                 x_next_seq_all = gpmpc_data["x_next_seq_all"]
                 u_seq_all = gpmpc_data["u_seq_all"]
@@ -597,7 +597,7 @@ class GPMPC(MPC):
                 train_inputs_i, train_targets_i = self.preprocess_training_data(x_seq, u_seq, x_next_seq)
                 train_inputs.append(train_inputs_i)
                 train_targets.append(train_targets_i)
-            np.savez("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/small_drone/statecontroldata_rand.npz", x_seq_all = x_seq_all, x_next_seq_all = x_next_seq_all, u_seq_all = u_seq_all)
+            np.savez("/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/big_drone/statecontroldata_rand.npz", x_seq_all = x_seq_all, x_next_seq_all = x_next_seq_all, u_seq_all = u_seq_all)
             ###########
         else:
             train_inputs = input_data
@@ -648,20 +648,28 @@ class GPMPC(MPC):
                                                      target_mask=self.target_mask,
                                                      normalize=self.normalize_training_data
                                                      )
-        if gp_model:
-            self.gaussian_process.init_with_hyperparam(train_inputs_tensor,
-                                                       train_targets_tensor,
-                                                       gp_model)
-        else:
-            # Train the GP.
-            self.gaussian_process.train(train_inputs_tensor,
-                                        train_targets_tensor,
-                                        test_inputs_tensor,
-                                        test_targets_tensor,
-                                        n_train=self.optimization_iterations,
-                                        learning_rate=self.learning_rate,
-                                        gpu=self.use_gpu,
-                                        dir=self.output_dir)
+        # if gp_model:
+        #     self.gaussian_process.init_with_hyperparam(train_inputs_tensor,
+        #                                                train_targets_tensor,
+        #                                                gp_model)
+        # else:
+        #     # Train the GP.
+        #     self.gaussian_process.train(train_inputs_tensor,
+        #                                 train_targets_tensor,
+        #                                 test_inputs_tensor,
+        #                                 test_targets_tensor,
+        #                                 n_train=self.optimization_iterations,
+        #                                 learning_rate=self.learning_rate,
+        #                                 gpu=self.use_gpu,
+        #                                 dir=self.output_dir)
+        self.gaussian_process.train(train_inputs_tensor,
+                                    train_targets_tensor,
+                                    test_inputs_tensor,
+                                    test_targets_tensor,
+                                    n_train=self.optimization_iterations,
+                                    learning_rate=self.learning_rate,
+                                    gpu=self.use_gpu,
+                                    dir=self.output_dir)
         # Plot validation.
         if plot:
             validation_inputs, validation_targets = self.preprocess_training_data(x_seq, u_seq, x_next_seq)

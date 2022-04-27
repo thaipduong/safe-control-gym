@@ -45,7 +45,7 @@ def plot_xz_comparison_diag_constraint(traj,
     #ax.plot(run[:, 0], run[:, 2], 'g-', label='Robot Position')
 
     # ax.plot(prior_run.obs[:,state_inds[0]], prior_run.obs[:,state_inds[1]], '-', label='Linear MPC')
-    ax.plot(run[:, state_inds[0]], run[:, state_inds[1]], 'g-', label='Robot Position')
+    ax.plot(run.obs[:, state_inds[0]], run.obs[:, state_inds[1]], 'g-', label='Robot Position')
 
     if dir is not None:
         np.savetxt(os.path.join(dir, 'limit.csv'), limit_vals, delimiter=',', header='x_limit,y_limit')
@@ -110,7 +110,7 @@ def plot_2D_comparison_with_prior(state_inds,
             label='Desired Traj')
     final_ind = -1
     #ax.plot(prior_run.obs[:,state_inds[0]], prior_run.obs[:,state_inds[1]], '-', label='Linear MPC')
-    ax.plot(run.obs[:, state_inds[0]], run.obs[:, state_inds[1]], 'b-', label='GP-MPC')
+    ax.plot(run[:, state_inds[0]], run[:, state_inds[1]], 'b-', label='GP-MPC')
     if dir is not None:
         np.savetxt(os.path.join(dir, 'goal.csv'), np.array([goal]),  delimiter=',',header='x_goal,y_goal')
         #np.savetxt(os.path.join(dir,'linear_mpc.csv'), prior_run.obs[:,state_inds],  delimiter=',',header='x_linearmpc,y_linearmpc')
@@ -235,9 +235,8 @@ if __name__ == "__main__":
         # Plot the results.
         #prior_run = munch.munchify(prior_results)
         run = munch.munchify(run_results)
-
         np.savez(
-            "/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/small_drone/gpmpc_results.npz",
+            "/home/erl/repos/journal_zhichao/safe-control-gym/experiments/annual_reviews/figure6/data/big_drone/gpmpc_results.npz",
             traj = ctrl.env.X_GOAL, run = run_results["obs"])
-        plot_xz_comparison_diag_constraint(ctrl.env.X_GOAL, run.obs, 1)
+        plot_xz_comparison_diag_constraint(ctrl.env.X_GOAL, run, 1)
         plt.show()
